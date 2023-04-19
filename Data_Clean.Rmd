@@ -9,4 +9,26 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r libraries}
+library(tidyverse)
+library(readr)
+
+```
+
+```{r Read in Data}
+survey <- read_csv(here::here("survey.csv"))
+
+head(survey)
+```
+
+```{r clean}
+
+survey <- survey %>%
+  mutate(Gender = ifelse(Gender == "M" | Gender == "m" | Gender == "male", "Male",
+                  ifelse(Gender == "guy" | Gender == "Guy", "Male",
+                  ifelse(Gender == "F" | Gender == "f" | Gender == "female", "Female", Gender))))
+
+
+
+```
 
