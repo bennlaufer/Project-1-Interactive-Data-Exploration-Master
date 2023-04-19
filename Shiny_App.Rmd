@@ -10,3 +10,48 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+```{r libraries}
+library(shiny)
+
+
+```
+
+```{r data read in}
+#Takes the cleaned data from the previous R markdown
+clean_data <- readRDS(here::here("clean_data.RDS"))
+
+head(clean_data)
+```
+
+
+```{r shiny}
+
+ui <- fluidPage(
+  titlePanel("dataset"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("x_var", "X-axis variable:", choices = names(clean_data)),
+      selectInput("y_var", "Y-axis variable:", choices = names(clean_data))
+    ),
+    mainPanel(
+      plotOutput("scatter_plot")
+    )
+  )
+)
+
+
+```
+
+```{r shiny server}
+
+server <- function(input, output) {
+  output$scatter_plot <- renderPlot({
+    plot(clean_data[, input$x_var], clean_data[, input$y_var], 
+         xlab = input$x_var, ylab = input$y_var)
+  }
+  )
+}
+
+
+shinyApp(ui = ui, server = server)
+```

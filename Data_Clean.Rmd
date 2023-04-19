@@ -23,12 +23,13 @@ head(survey)
 
 ```{r clean}
 
-survey <- survey %>%
+clean_data <- survey %>%
   mutate(Gender = ifelse(Gender == "M" | Gender == "m" | Gender == "male", "Male",
                   ifelse(Gender == "guy" | Gender == "Guy", "Male",
                   ifelse(Gender == "F" | Gender == "f" | Gender == "female", "Female", Gender))))
 
 
 
+saveRDS(clean_data, file = "clean_data.RDS")
 ```
 
