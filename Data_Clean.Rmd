@@ -16,6 +16,8 @@ library(readr)
 ```
 
 ```{r Read in Data}
+#Dataset from https://www.kaggle.com/datasets/osmi/mental-health-in-tech-survey?resource=download
+
 survey <- read_csv(here::here("survey.csv"))
 
 head(survey)

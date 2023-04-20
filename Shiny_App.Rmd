@@ -12,46 +12,82 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r libraries}
 library(shiny)
-
+library(dplyr)
+library(ggplot2)
 
 ```
 
-```{r data read in}
-#Takes the cleaned data from the previous R markdown
+
+
+```{r clean_data read in}
+#Takes the cleaned clean_data from the previous R markdown
 clean_data <- readRDS(here::here("clean_data.RDS"))
 
 head(clean_data)
 ```
 
 
-```{r shiny}
 
+```{r}
+
+# Define UI
 ui <- fluidPage(
-  titlePanel("dataset"),
+  titlePanel("My Shiny App"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("x_var", "X-axis variable:", choices = names(clean_data)),
-      selectInput("y_var", "Y-axis variable:", choices = names(clean_data))
+      selectInput("country", "Select country:", choices = unique(clean_data$Country)),
+      selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
+      selectInput("variable", "Select variable:", choices = unique(names(clean_data)[3:ncol(clean_data)]))
     ),
     mainPanel(
-      plotOutput("scatter_plot")
+      tableOutput("mytable"),
+      plotOutput("myplot")
     )
   )
 )
 
-
-```
-
-```{r shiny server}
-
+# Define server
 server <- function(input, output) {
-  output$scatter_plot <- renderPlot({
-    plot(clean_data[, input$x_var], clean_data[, input$y_var], 
-         xlab = input$x_var, ylab = input$y_var)
-  }
-  )
+  
+  # Filter data by country and gender
+  clean_data_filtered <- reactive({
+    if (input$gender == "All") {
+      clean_data %>%
+        filter(Country == input$country)
+    } else {
+      clean_data %>%
+        filter(Country == input$country, Gender == input$gender)
+    }
+  })
+  
+  # Summarize data by variable and calculate frequency percentages
+  clean_data_summary <- reactive({
+    clean_data_filtered() %>%
+      group_by(!!sym(input$variable)) %>%
+      summarize(Freq = n()) %>%
+      mutate(Percentage = Freq / sum(Freq) * 100)
+  })
+  
+  # Generate table
+  output$mytable <- renderTable({
+    clean_data_summary() %>%
+      arrange(desc(Freq))
+  })
+  
+# Generate bar graph
+  output$myplot <- renderPlot({
+    ggplot(clean_data_summary(), aes(x = !!sym(input$variable), y = Percentage)) +
+    geom_bar(stat = "identity", position = "dodge")
+
+  })
+  
 }
 
-
+# Run the app
 shinyApp(ui = ui, server = server)
+
+
 ```
+
+
+
