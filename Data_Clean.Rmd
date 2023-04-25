@@ -23,15 +23,62 @@ survey <- read_csv(here::here("survey.csv"))
 head(survey)
 ```
 
+```{r view data}
+
+Gender <- survey |> 
+  select(Gender) |> 
+  filter(Gender != "Male" & Gender != "Female") |> 
+  filter(!duplicated(Gender))
+
+Gender
+
+Age <- survey |> 
+  select(Age) |> 
+  filter(Age < 5 | Age > 122)
+
+Age
+
+```
+
 ```{r clean}
 
 clean_data <- survey %>%
-  mutate(Gender = ifelse(Gender == "M" | Gender == "m" | Gender == "male", "Male",
-                  ifelse(Gender == "guy" | Gender == "Guy", "Male",
-                  ifelse(Gender == "F" | Gender == "f" | Gender == "female", "Female", Gender))))
+  mutate(Gender = ifelse(Gender == "Male" | Gender == "M" | Gender == "male" | 
+                           Gender == "m" | Gender == "maile" | Gender == "Cis Male" | 
+                           Gender == "Mal" | Gender == "Male (CIS)" | 
+                           Gender == "Make" | Gender == "Man" | Gender == "msle" | 
+                           Gender == "Mail" | Gender == "cis male" | 
+                           Gender == "Malr" | Gender == "Cis Man", 
+                         "Male",
+                    ifelse(Gender == "Female" | Gender == "female" | Gender == "F" | 
+                             Gender == "Woman" | Gender == "f" | Gender == "Femake" | 
+                             Gender == "woman" | Gender == "cis-female/femme" | 
+                             Gender == "Female (cis)" | Gender == "femail", 
+                           "Female", 
+                      ifelse(Gender == "Male-ish" | Gender == "something kinda male?" | 
+                               Gender == "male leaning androgynous" | 
+                               Gender == "Guy (-ish) ^_^" | 
+                               Gender == "ostensibly male, unsure what that really means",
+                             "Leaning Male", 
+                        ifelse(Gender == "queer/she/they", 
+                               "Leaning Female", 
+                          ifelse(Gender == "Trans-female" | Gender == "Trans woman" | 
+                                   Gender == "Female (trans)", 
+                                 "Trans Female", 
+                            ifelse(Gender == "non-binary" | Gender == "All" | 
+                                     Gender == "Enby" | Gender == "fluid" | 
+                                     Gender == "Genderqueer" | Gender == "Androgyne" | 
+                                     Gender == "Agender" | Gender == "queer",
+                                   "Nonbinary",
+                                   "Did Not Specify")))))),
+         Age = ifelse(Age < 5 | Age > 122,
+                      NA,
+                      Age),
+  across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x))) |> 
+  rename()
 
 
 
 saveRDS(clean_data, file = "clean_data.RDS")
-```
 
+```
