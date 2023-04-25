@@ -46,8 +46,9 @@ ui <- fluidPage(
       selectInput("plot", "Select plot type:", choices = unique(c("plotly", "ggplot")))
     ),
     mainPanel(
-      tableOutput("table"),
-      plotOutput("plot")
+      plotOutput("plot"),
+      dataTableOutput("table"),
+      h3("Dataset for plot:")
     )
   )
 )
@@ -75,10 +76,10 @@ server <- function(input, output) {
   })
   
   # Generate table
-  output$table <- renderTable({
+  output$table <- renderDataTable({
     clean_data_summary() %>%
-      arrange(desc(Freq)) %>%
-      head()
+      arrange(desc(Freq))
+      #head()
   })
   
 # Generate bar graph
