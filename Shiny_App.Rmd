@@ -6,11 +6,14 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
+
 ```
 
 
 ```{r libraries}
+
 library(shiny)
 library(dplyr)
 library(ggplot2)
@@ -20,10 +23,12 @@ library(ggplot2)
 
 
 ```{r clean_data read in}
+
 #Takes the cleaned clean_data from the previous R markdown
 clean_data <- readRDS(here::here("clean_data.RDS"))
 
 head(clean_data)
+
 ```
 
 
@@ -37,7 +42,7 @@ ui <- fluidPage(
     sidebarPanel(
       selectInput("country", "Select country:", choices = unique(clean_data$Country)),
       selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
-      selectInput("variable", "Select variable:", choices = unique(names(clean_data)[3:ncol(clean_data)]))
+      selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)]))
     ),
     mainPanel(
       tableOutput("mytable"),
