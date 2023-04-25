@@ -42,6 +42,11 @@ Age
 
 ```{r clean}
 
+# use case_when instead of nested ifs
+# OR make a spreadsheet with all responses and left join
+# It's okay to randomly drop rows (e.g. because the datapoints look fishy, like the person who said they were 8 yrs old or the person who answered the first response on every dropdown)
+# It's dangerous/bad practice to systematically drop datapoints because that gives you biased data
+
 clean_data <- survey %>%
   mutate(Gender = ifelse(Gender == "Male" | Gender == "M" | Gender == "male" | 
                            Gender == "m" | Gender == "maile" | Gender == "Cis Male" | 
