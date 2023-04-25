@@ -100,5 +100,91 @@ shinyApp(ui = ui, server = server)
 
 ```
 
+```{r}
+
+# Define UI
+ui <- fluidPage(
+  titlePanel("My Shiny App"),
+  navbarPage(
+    "Header Selections",
+    tabPanel("ggplot",
+             sidebarPanel(
+              selectInput("country", "Select country:", choices = unique(clean_data$Country)),
+              selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
+              selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
+              selectInput("plot", "Select plot type:", choices = unique(c("plotly", "ggplot")))
+          ),
+          tableOutput("table"),
+          plotOutput("ggplot")
+    ),
+    tabPanel("Scatter Plot",
+             sidebarPanel(
+              selectInput("country", "Select country:", choices = unique(clean_data$Country)),
+              selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
+              selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
+              selectInput("plot", "Select plot type:", choices = unique(c("plotly", "ggplot")))
+          ),
+          plotOutput("Scatter Plot"))
+               
+    )
+             
+)
+
+
+# Define server
+server <- function(input, output) {
+  
+  # Filter data by country and gender
+  clean_data_filtered <- reactive({
+    if (input$gender == "All") {
+      clean_data %>%
+        filter(Country == input$country)
+    } else {
+      clean_data %>%
+        filter(Country == input$country, Gender == input$gender)
+    }
+  })
+  
+  # Summarize data by variable and calculate frequency percentages
+  clean_data_summary <- reactive({
+    clean_data_filtered() %>%
+      group_by(!!sym(input$variable)) %>%
+      summarize(Freq = n()) %>%
+      mutate(Percentage = Freq / sum(Freq) * 100)
+  })
+  
+  # Generate table
+  output$table <- renderTable({
+    clean_data_summary() %>%
+      arrange(desc(Freq)) %>%
+      head()
+  })
+  
+# Generate bar graph
+  output$ggplot <- renderPlot({
+    if(input$plot == "ggplot"){
+      ggplot(clean_data_summary(), aes(x = !!sym(input$variable), y = Percentage, color = !!sym(input$variable))) +
+      geom_bar(stat = "identity", position = "dodge")
+    }  
+
+  })
+  
+}
+
+# Run the app
+shinyApp(ui = ui, server = server)
+
+
+#Refrenced Chat GPT
+
+
+
+
+
+
+
+
+```
+
 
 
