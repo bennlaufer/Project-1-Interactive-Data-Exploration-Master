@@ -117,19 +117,17 @@ ui <- fluidPage(
               selectInput("country", "Select country:", choices = unique(clean_data$Country)),
               selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
               selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
-              selectInput("plot", "Select plot type:", choices = unique(c("map", "bar graph")))
+              selectInput("plot", "Select plot type:", choices = unique(c("scatter plot", "bar graph")))
           ),
           tableOutput("table"),
           plotOutput("ggplot")
     ),
-    tabPanel("Scatter Plot",
+    tabPanel("USA Map",
              sidebarPanel(
-              selectInput("country", "Select country:", choices = unique(clean_data$Country)),
               selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
               selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
-              selectInput("plot", "Select plot type:", choices = unique(c("map", "bar graph")))
           ),
-          plotOutput("scatter"))
+          leafletOutput("map"))
                
     )
              
@@ -172,9 +170,9 @@ server <- function(input, output) {
       geom_bar(stat = "identity", position = "dodge")
     }
   })
-  output$scatter <- renderPlot({
-    if(input$plot == "map"){
-      if(input$country == "United States"){
+  
+  
+    output$map <- renderLeaflet({
         # code from https://rstudio.github.io/leaflet/choropleths.html
         m <- leaflet(usa_map) |> 
           setView(-96, 37.8, 4) |> 
@@ -192,22 +190,16 @@ server <- function(input, output) {
           color = "white",
           dashArray = "3",
           fillOpacity = 0.7)
-      }
-
-    }
-  })
+    })
+  
+  
 }
 
 # Run the app
 shinyApp(ui = ui, server = server)
 
 
-#Refrenced Chat GPT
-
-
-
-
-
+# Refrenced Chat GPT
 
 
 
