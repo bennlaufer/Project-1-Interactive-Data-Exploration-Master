@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "Shiny_App"
 author: "Nir Ben Laufer"
@@ -238,3 +239,5 @@ shinyApp(ui = ui, server = server)
 
 
 
+=======
+>>>>>>> 512e694f94ef3f451b80dfcc36d9cedbec92731b
