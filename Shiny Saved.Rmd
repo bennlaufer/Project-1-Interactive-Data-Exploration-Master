@@ -10,10 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r libraries}
-
 library(shiny)
 library(dplyr)
 library(ggplot2)
+library(leaflet)
+library(geojsonio)
 
 ```
 
@@ -22,13 +23,13 @@ library(ggplot2)
 
 #Takes the cleaned clean_data from the previous R markdown
 clean_data <- readRDS(here::here("clean_data.RDS"))
-
 head(clean_data)
+usa_map <- geojsonio::geojson_read("https://rstudio.github.io/leaflet/json/us-states.geojson", what = "sp")
 
 ```
 
-```{r}
 
+```{r}
 # Define UI
 ui <- fluidPage(
   titlePanel("My Shiny App"),
@@ -39,22 +40,24 @@ ui <- fluidPage(
               selectInput("country", "Select country:", choices = unique(clean_data$Country)),
               selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
               selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
-              selectInput("plot", "Select plot type:", choices = unique(c("plotly", "ggplot")))
+              selectInput("plot", "Select plot type:", choices = unique(c("scatter plot", "bar graph")))
           ),
-          tableOutput("table"),
-          plotOutput("ggplot")
-    ),
-    tabPanel("Scatter Plot",
+          
+              mainPanel(
+               tabPanel("Table", dataTableOutput("table")),
+               tabPanel("Plot", plotOutput("ggplot"))
+             )
+          ),
+      
+    tabPanel("USA Map",
              sidebarPanel(
-              selectInput("country", "Select country:", choices = unique(clean_data$Country)),
               selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
               selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
-              selectInput("plot", "Select plot type:", choices = unique(c("plotly", "ggplot")))
           ),
-          plotOutput("Scatter Plot"))
-               
+          mainPanel(
+          leafletOutput("map"))
+      )       
     )
-             
 )
 
 
@@ -81,34 +84,43 @@ server <- function(input, output) {
   })
   
   # Generate table
-  output$table <- renderTable({
+  output$table <- renderDataTable({
     clean_data_summary() %>%
       arrange(desc(Freq)) %>%
       head()
-  })
+  } , options = list(lengthMenu = c(5, 10, 15)))
   
 # Generate bar graph
   output$ggplot <- renderPlot({
-    if(input$plot == "ggplot"){
-      ggplot(clean_data_summary(), aes(x = !!sym(input$variable), y = Percentage, color = !!sym(input$variable))) +
+    if(input$plot == "bar graph"){
+      ggplot(clean_data_summary(), aes(x = !!sym(input$variable), y = Percentage)) +
       geom_bar(stat = "identity", position = "dodge")
-    }  
-
+    }
   })
   
+  
+    output$map <- renderLeaflet({
+        # code from https://rstudio.github.io/leaflet/choropleths.html
+        m <- leaflet(usa_map) |> 
+          setView(-96, 37.8, 4) |> 
+          addProviderTiles("MapBox", options = providerTileOptions(
+            id = "mapbox.light",
+            accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) 
+        
+        bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+        pal <- colorBin("YlOrRd", domain = input$variable, bins = bins)
+        m %>% addPolygons(
+          fillColor = ~pal(density),
+          weight = 2,
+          opacity = 1,
+          color = "white",
+          dashArray = "3",
+          fillOpacity = 0.7)
+    })
+  
+  
 }
-
 # Run the app
 shinyApp(ui = ui, server = server)
-
-
-#Refrenced Chat GPT
-
-
-
-
-
-
-
-
+# Refrenced Chat GPT
 ```
