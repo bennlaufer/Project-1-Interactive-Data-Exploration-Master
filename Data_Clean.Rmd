@@ -81,7 +81,8 @@ clean_data <- survey %>%
   mutate(Age = ifelse(Age < 18 | Age > 100,
                       NA,
                       Age),
-         across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x)))
+         across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x))) |> 
+  select(Age:obs_consequence)
 
 
 
