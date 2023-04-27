@@ -42,45 +42,46 @@ Age
 
 ```{r clean}
 
+# Comments from class 4/25
 # use case_when instead of nested ifs
 # OR make a spreadsheet with all responses and left join
 # It's okay to randomly drop rows (e.g. because the datapoints look fishy, like the person who said they were 8 yrs old or the person who answered the first response on every dropdown)
 # It's dangerous/bad practice to systematically drop datapoints because that gives you biased data
 
 clean_data <- survey %>%
-  mutate(Gender = ifelse(Gender == "Male" | Gender == "M" | Gender == "male" | 
-                           Gender == "m" | Gender == "maile" | Gender == "Cis Male" | 
-                           Gender == "Mal" | Gender == "Male (CIS)" | 
-                           Gender == "Make" | Gender == "Man" | Gender == "msle" | 
-                           Gender == "Mail" | Gender == "cis male" | 
-                           Gender == "Malr" | Gender == "Cis Man", 
-                         "Male",
-                    ifelse(Gender == "Female" | Gender == "female" | Gender == "F" | 
+  mutate(
+    Gender = case_when(Gender == "Male" | Gender == "M" | Gender == "male" | 
+                              Gender == "m" | Gender == "maile" | Gender == "Cis Male" | 
+                              Gender == "Mal" | Gender == "Male (CIS)" | 
+                              Gender == "Make" | Gender == "Man" | Gender == "msle" | 
+                              Gender == "Mail" | Gender == "cis male" | 
+                              Gender == "Malr" | Gender == "Cis Man"
+                            ~ "Male",
+            Gender == "Female" | Gender == "female" | Gender == "F" | 
                              Gender == "Woman" | Gender == "f" | Gender == "Femake" | 
                              Gender == "woman" | Gender == "cis-female/femme" | 
-                             Gender == "Female (cis)" | Gender == "femail", 
-                           "Female", 
-                      ifelse(Gender == "Male-ish" | Gender == "something kinda male?" | 
+                             Gender == "Female (cis)" | Gender == "femail" 
+              ~ "Female",
+            Gender == "Male-ish" | Gender == "something kinda male?" | 
                                Gender == "male leaning androgynous" | 
                                Gender == "Guy (-ish) ^_^" | 
-                               Gender == "ostensibly male, unsure what that really means",
-                             "Leaning Male", 
-                        ifelse(Gender == "queer/she/they", 
-                               "Leaning Female", 
-                          ifelse(Gender == "Trans-female" | Gender == "Trans woman" | 
-                                   Gender == "Female (trans)", 
-                                 "Trans Female", 
-                            ifelse(Gender == "non-binary" | Gender == "All" | 
+                               Gender == "ostensibly male, unsure what that really means"
+              ~ "Leaning Male",
+            Gender == "queer/she/they" 
+              ~ "Leaning Female",
+            Gender == "Trans-female" | Gender == "Trans woman" | 
+                                   Gender == "Female (trans)" 
+              ~ "Trans Female", 
+            Gender == "non-binary" | Gender == "All" | 
                                      Gender == "Enby" | Gender == "fluid" | 
                                      Gender == "Genderqueer" | Gender == "Androgyne" | 
-                                     Gender == "Agender" | Gender == "queer",
-                                   "Nonbinary",
-                                   "Did Not Specify")))))),
-         Age = ifelse(Age < 5 | Age > 122,
+                                     Gender == "Agender" | Gender == "queer"
+              ~ "Nonbinary",
+            TRUE ~ "Did Not Specify")) |> 
+  mutate(Age = ifelse(Age < 18 | Age > 100,
                       NA,
                       Age),
-  across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x))) |> 
-  rename()
+         across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x)))
 
 
 
