@@ -80,9 +80,9 @@ ui <- fluidPage(
     "Header Selections",
     tabPanel("ggplot",
              sidebarPanel(
-              selectInput("country", "Select country:", choices = unique(clean_data$Country)),
-              selectInput("gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
-              selectInput("variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
+              selectInput("country", "Select country:", choices = c("All", unique(clean_data$Country))),
+              selectInput("gender", "Select gender", choices = c("All", unique(clean_data$Gender))),
+              selectInput("variable", "Select second variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
               selectInput("plot", "Select plot type:", choices = unique(c("dot plot", "bar graph"))),
               dataTableOutput("questions_table")
               ),
@@ -96,7 +96,7 @@ ui <- fluidPage(
     tabPanel("USA Map",
              sidebarPanel(
               selectInput("map_gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
-              selectInput("map_variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)])),
+              selectInput("map_variable", "Select variable:", choices = unique(names(clean_data)[3:ncol(clean_data)])),
           ),
           mainPanel(
           leafletOutput("map"))
@@ -110,12 +110,20 @@ server <- function(input, output) {
 
   # Filter data by country and gender
   clean_data_filtered <- reactive({
-    if (input$gender == "All") {
+    if (input$gender == "All" && input$country != "All") {
       clean_data %>%
         filter(Country == input$country)
-    } else {
+    } 
+    else if (input$gender != "All" && input$country != "All") {
       clean_data %>%
         filter(Country == input$country, Gender == input$gender)
+    }
+    else if (input$gender != "All" && input$country == "All") {
+      clean_data %>%
+        filter(Gender == input$gender)
+    }
+    else {
+      clean_data
     }
   })
   
@@ -148,7 +156,8 @@ server <- function(input, output) {
                                        y = Percentage)) +
         geom_bar(stat = "identity", 
                  position = "dodge",
-                 fill = "navy")
+                 fill = "navy") + 
+        labs(x = input$variable)
     }
       
     else if(input$plot == "dot plot"){
@@ -156,9 +165,7 @@ server <- function(input, output) {
                                        y = Percentage)) +
         geom_point(color = "navy",
                    size = 6) + 
-        labs(x = input$variable, main = str_c("Percentages of ", 
-                                              input$gender, 
-                                              input$variable))
+        labs(x = input$variable)
     }
   })
   
