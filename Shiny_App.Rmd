@@ -19,7 +19,7 @@ library(dplyr)
 library(ggplot2)
 library(leaflet)
 library(geojsonio)
-
+library(plotly)
 ```
 
 
@@ -33,7 +33,7 @@ head(clean_data)
 
 usa_map <- geojsonio::geojson_read("https://rstudio.github.io/leaflet/json/us-states.geojson", what = "sp")
 
-survey_questions <- data.frame(var = c("Age", "Gender", "Country", "state", 
+survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "state", 
                                        "self_employed", "family_history", 
                                        "treatment", "work_interfere", 
                                        "no_employees", "remote_work", 
@@ -45,7 +45,7 @@ survey_questions <- data.frame(var = c("Age", "Gender", "Country", "state",
                                        "supervisor", "mental_health_interview", 
                                        "phys_health_interview", 
                                        "mental_vs_physical", "obs_consequence"),
-                               question = c(NA, NA, NA, NA, "Are you self-employed?", 
+                               Variable_Explanation= c(NA, NA, NA, NA, "Are you self-employed?", 
                                             "Do you have a family history of mental illness?", 
                                             "Have you sought treatment for a mental health condition?", 
                                             "If you have a mental health condition, do you feel that it interferes with your work?", 
@@ -71,7 +71,7 @@ survey_questions <- data.frame(var = c("Age", "Gender", "Country", "state",
 ```
 
 
-```{r}
+```{r UI}
 
 # Define UI
 ui <- fluidPage(
@@ -82,7 +82,7 @@ ui <- fluidPage(
              sidebarPanel(
               selectInput("country", "Select country:", choices = c("All", unique(clean_data$Country))),
               selectInput("gender", "Select gender", choices = c("All", unique(clean_data$Gender))),
-              selectInput("variable", "Select second variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
+              selectInput("variable", "Select variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
               selectInput("plot", "Select plot type:", choices = unique(c("dot plot", "bar graph"))),
               dataTableOutput("questions_table")
               ),
@@ -100,10 +100,26 @@ ui <- fluidPage(
           ),
           mainPanel(
           leafletOutput("map"))
-      )       
-    )
+      ),
+    
+    tabPanel("Plotly Graph",
+             sidebarPanel(
+              #selectInput("country", "Select country:", choices = c("All", unique(clean_data$Country))),
+              selectInput("gender", "Select gender", choices = c("All", unique(clean_data$Gender))),
+              selectInput("variable1", "Select first variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
+              selectInput("variable2", "Select second variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
+              #selectInput("plot", "Select plot type:", choices = unique(c("dot plot", "bar graph"))),
+              ),
+          
+              mainPanel(
+               tabPanel("Plotly", plotlyOutput("plotly"))
+              )
+          )
 )
+)
+```
 
+```{R Server}
 
 # Define server
 server <- function(input, output) {
@@ -138,9 +154,8 @@ server <- function(input, output) {
   # Generate table
   output$table <- renderDataTable({
     clean_data_summary() %>%
-      arrange(desc(Freq)) %>%
-      head()
-  } , options = list(lengthMenu = c(5, 10, 15)))
+      arrange(desc(Freq))
+  }, options = list(lengthMenu = c(5, 10, 15)))
   
   
   # Generate table describing the variables in the data
@@ -170,34 +185,52 @@ server <- function(input, output) {
   })
   
   
-    output$map <- renderLeaflet({
-        # code from https://rstudio.github.io/leaflet/choropleths.html
-        m <- leaflet(usa_map) |> 
-          setView(-96, 37.8, 4) |> 
-          addProviderTiles("MapBox", options = providerTileOptions(
-            id = "mapbox.light",
-            accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) 
+  output$map <- renderLeaflet({
+      # code from https://rstudio.github.io/leaflet/choropleths.html
+      m <- leaflet(usa_map) |> 
+        setView(-96, 37.8, 4) |> 
+        addProviderTiles("MapBox", options = providerTileOptions(
+          id = "mapbox.light",
+          accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) 
         
-        bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
-        pal <- colorBin("YlOrRd", domain = input$map_variable, bins = bins)
-        m %>% addPolygons(
-          fillColor = ~pal(input$map_variable),
-          weight = 2,
-          opacity = 1,
-          color = "white",
-          dashArray = "3",
-          fillOpacity = 0.7)
+      bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+      pal <- colorBin("YlOrRd", domain = input$map_variable, bins = bins)
+      m %>% addPolygons(
+        fillColor = ~pal(input$map_variable),
+        weight = 2,
+        opacity = 1,
+        color = "white",
+        dashArray = "3",
+        fillOpacity = 0.7)
     })
   
-  
+  output$plotly <- renderPlotly({
+      #Create plotly, using dataset from prev. chunk
+      fig <- clean_data_summary() %>%
+        plot_ly(
+          type = 'scatter',
+          mode = 'markers',
+          x = as.formula(paste0("~", input$variable1),
+          y = ~Percent,
+          #text = ~Country,
+          #name = "Click to remove/add Scatter Points",
+          # hovertemplate = paste(
+          #   "<b>%{text}</b><br><br>",
+          #   "%{Religion in Daily Lives}: %{x:.0%}<br>",
+          #   "%{Believe Region over science}: %{y:.0%}<br>",
+          #   "<extra></extra>"
+            )
+          )
+  })
 }
-
-# Run the app
-shinyApp(ui = ui, server = server)
 
 
 # Refrenced Chat GPT
 
+```
 
+```{r app}
+# Run the app
+shinyApp(ui = ui, server = server)
 
 ```
