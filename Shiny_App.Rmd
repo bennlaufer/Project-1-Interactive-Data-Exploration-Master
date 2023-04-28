@@ -6,25 +6,50 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+<<<<<<< HEAD
 knitr::opts_chunk$set(echo = TRUE)
+=======
+
+knitr::opts_chunk$set(echo = TRUE)
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
 ```
 
 
 ```{r libraries}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
 library(shiny)
 library(dplyr)
 library(ggplot2)
 library(leaflet)
 library(geojsonio)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
 ```
 
 
 
 ```{r clean_data read in}
+<<<<<<< HEAD
 #Takes the cleaned clean_data from the previous R markdown
 clean_data <- readRDS(here::here("clean_data.RDS"))
 head(clean_data)
 usa_map <- geojsonio::geojson_read("https://rstudio.github.io/leaflet/json/us-states.geojson", what = "sp")
+=======
+
+#Takes the cleaned clean_data from the previous R markdown
+clean_data <- readRDS(here::here("clean_data.RDS"))
+
+head(clean_data)
+
+usa_map <- geojsonio::geojson_read("https://rstudio.github.io/leaflet/json/us-states.geojson", what = "sp")
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
 survey_questions <- data.frame(var = c("Age", "Gender", "Country", "state", 
                                        "self_employed", "family_history", 
                                        "treatment", "work_interfere", 
@@ -58,10 +83,19 @@ survey_questions <- data.frame(var = c("Age", "Gender", "Country", "state",
                                             "Would you bring up a physical health issue with a potential employer in an interview?", 
                                             "Do you feel that your employer takes mental health as seriously as physical health?", 
                                             "Have you heard of or observed negative consequences for coworkers with mental health conditions in your workplace?"))
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
 ```
 
 
 ```{r}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
 # Define UI
 ui <- fluidPage(
   titlePanel("My Shiny App"),
@@ -92,8 +126,16 @@ ui <- fluidPage(
       )       
     )
 )
+<<<<<<< HEAD
 # Define server
 server <- function(input, output) {
+=======
+
+
+# Define server
+server <- function(input, output) {
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
   # Filter data by country and gender
   clean_data_filtered <- reactive({
     if (input$gender == "All" && input$country != "All") {
@@ -177,7 +219,21 @@ server <- function(input, output) {
   
   
 }
+<<<<<<< HEAD
 # Run the app
 shinyApp(ui = ui, server = server)
 # Refrenced Chat GPT
 ```
+=======
+
+# Run the app
+shinyApp(ui = ui, server = server)
+
+
+# Refrenced Chat GPT
+
+
+
+```
+
+>>>>>>> 8ae3919ff63fecbfd5704e6f13e7b80383158a33
