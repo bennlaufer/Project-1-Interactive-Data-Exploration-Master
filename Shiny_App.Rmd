@@ -32,14 +32,6 @@ clean_data <- readRDS(here::here("clean_data.RDS"))
 
 head(clean_data)
 
-usa_map <- geojsonio::geojson_read("https://rstudio.github.io/leaflet/json/us-states.geojson", what = "sp")
-class(usa_map)
-names(usa_map)
-
-state_lookup <- setNames(state.name, state.abb)
-
-clean_data$state_full <- state_lookup[as.character(clean_data$state)]
-
 survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "state", 
                                        "self_employed", "family_history", 
                                        "treatment", "work_interfere", 
@@ -77,6 +69,24 @@ survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "st
 
 ```
 
+```{r Cleaning for Map}
+
+state_lookup <- setNames(state.name, state.abb)
+
+# Filter data to include only states, we are only interested in thee United States
+    clean_data_states <- clean_data_states[complete.cases(clean_data_states$state_full), ]
+    
+    #Using maps package, 
+      
+    state.center <- as.data.frame(state.center)
+    state.center$state_full <- state.name
+    
+    clean_data_merged <- merge(state.center, clean_data_states, by = "state_full")
+
+clean_data_states <- clean_data
+clean_data_states$state_full <- state_lookup[as.character(clean_data$state)]
+
+```
 
 ```{r UI}
 # Define UI
@@ -209,33 +219,46 @@ server <- function(input, output) {
   })
   
   
+  clean_data_map_summary <- reactive({
+    clean_data_filtered() %>%
+      group_by(!!sym(input$variable)) %>%
+      summarize(Freq = n()) %>%
+      mutate(Percentage = Freq / sum(Freq) * 100)
+  })
+  
     # Create the Leaflet map
     
-    # Filter data to include only states, we are only interested in thee United States
-    clean_data <- clean_data[complete.cases(clean_data$state_full), ]
+    clean_data_map_filtered <- reactive({
+    if (input$gender == "All" && input$country != "All") {
+      clean_data_merged %>%
+        filter(Country == input$country)
+    } 
+    else if (input$gender != "All" && input$country != "All") {
+      clean_data_merged %>%
+        filter(Country == input$country, Gender == input$gender)
+    }
+    else if (input$gender != "All" && input$country == "All") {
+      clean_data_merged %>%
+        filter(Gender == input$gender)
+    }
+    else {
+      clean_data_merged
+    }
+  })
     
-    #Using maps package, discovered through ChatGPT to add longitude and latitude for each state
-      
-    state.center <- as.data.frame(state.center)
-    state.center$state_full <- state.name
-    
-    clean_data_merged <- merge(state.center, clean_data, by = "state_full")
-    
+     clean_data_map_summary <- reactive({
+    clean_data_map_filtered() %>%
+      group_by(!!sym(input$variable)) %>%
+      summarize(Freq = n()) %>%
+      mutate(Percentage = Freq / sum(Freq) * 100)
+     })
 
     output$map <- renderLeaflet({
       
-      filtered_data <- clean_data_merged
-      if (input$map_gender != "All") {
-      filtered_data <- filtered_data[filtered_data$Gender == input$map_gender,]
-      }
-      selected_variable <- input$map_variable
-    filtered_data <- filtered_data[!is.na(filtered_data[[selected_variable]]),]
-
-      
-        leaflet(data = filtered_data) %>%  
+        leaflet(data = clean_data_map_summary()) %>%  
         setView(-96, 37.8, 4) %>% 
         addTiles() %>% 
-        addCircles(lng = ~x, lat = ~y, weight = 1, radius = )
+        addCircles(lng = ~x, lat = ~y, weight = 1, radius = ~Percentage)
         
     })
     
@@ -254,6 +277,11 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 
 ```
-
+filtered_data <- clean_data_merged
+      if (input$map_gender != "All") {
+      filtered_data <- filtered_data[filtered_data$Gender == input$map_gender,]
+      }
+      selected_variable <- input$map_variable
+    filtered_data <- filtered_data[!is.na(filtered_data[[selected_variable]]),]
 
   
