@@ -72,12 +72,12 @@ survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "st
 
 
 ```{r UI}
-
 # Define UI
 ui <- fluidPage(
   titlePanel("My Shiny App"),
   navbarPage(
     "Header Selections",
+    #ggplot Tabpanel
     tabPanel("ggplot",
              sidebarPanel(
               selectInput("country", "Select country:", choices = c("All", unique(clean_data$Country))),
@@ -92,7 +92,7 @@ ui <- fluidPage(
                tabPanel("Plot", plotOutput("ggplot"))
               )
           ),
-      
+    #Leaflet tabpanel  
     tabPanel("USA Map",
              sidebarPanel(
               selectInput("map_gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
@@ -101,14 +101,10 @@ ui <- fluidPage(
           mainPanel(
           leafletOutput("map"))
       ),
-    
+    #Plotly tabpanel
     tabPanel("Plotly Graph",
              sidebarPanel(
-              #selectInput("country", "Select country:", choices = c("All", unique(clean_data$Country))),
-              selectInput("gender", "Select gender", choices = c("All", unique(clean_data$Gender))),
-              selectInput("variable1", "Select first variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
-              selectInput("variable2", "Select second variable:", choices = unique(names(clean_data)[4:ncol(clean_data)])),
-              #selectInput("plot", "Select plot type:", choices = unique(c("dot plot", "bar graph"))),
+              selectInput("plotly_variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)]))
               ),
           
               mainPanel(
@@ -206,21 +202,21 @@ server <- function(input, output) {
   
   output$plotly <- renderPlotly({
       #Create plotly, using dataset from prev. chunk
-      fig <- clean_data_summary() %>%
+      fig <- clean_data_filtered() %>%
         plot_ly(
           type = 'scatter',
           mode = 'markers',
-          x = as.formula(paste0("~", input$variable1),
-          y = ~Percent,
-          #text = ~Country,
-          #name = "Click to remove/add Scatter Points",
-          # hovertemplate = paste(
-          #   "<b>%{text}</b><br><br>",
-          #   "%{Religion in Daily Lives}: %{x:.0%}<br>",
-          #   "%{Believe Region over science}: %{y:.0%}<br>",
-          #   "<extra></extra>"
+          x = ~Age,
+          y = as.formula(paste0("~", input$plotly_variable)),
+          color = ~Country,
+          text = ~Country,
+          hovertemplate = paste(
+            "<b>%{text}</b><br><br>",
+            "{Age}: %{x:}<br>",
+            "{Variable Selected Reponse}: %{y:input$plotly_variable)}<br>",
+            "<extra></extra>"
             )
-          )
+        )
   })
 }
 
