@@ -20,6 +20,8 @@ library(ggplot2)
 library(leaflet)
 library(geojsonio)
 library(plotly)
+library(state.abb)
+library(maps)
 ```
 
 
@@ -32,6 +34,12 @@ clean_data <- readRDS(here::here("clean_data.RDS"))
 head(clean_data)
 
 usa_map <- geojsonio::geojson_read("https://rstudio.github.io/leaflet/json/us-states.geojson", what = "sp")
+class(usa_map)
+names(usa_map)
+
+state_lookup <- setNames(state.name, state.abb)
+
+clean_data$state_full <- state_lookup[as.character(clean_data$state)]
 
 survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "state", 
                                        "self_employed", "family_history", 
@@ -77,7 +85,8 @@ ui <- fluidPage(
   titlePanel("My Shiny App"),
   navbarPage(
     "Header Selections",
-    #ggplot Tabpanel
+    #The code below creates the ggplot tab panel. This one shows the data - presented with either a bar graph or dot plot in ggplot
+    
     tabPanel("ggplot",
              sidebarPanel(
               selectInput("country", "Select country:", choices = c("All", unique(clean_data$Country))),
@@ -92,7 +101,8 @@ ui <- fluidPage(
                tabPanel("Plot", plotOutput("ggplot"))
               )
           ),
-    #Leaflet tabpanel  
+    
+    #The code below presents the data - when viewing the United States - as a Leaflet map
     tabPanel("USA Map",
              sidebarPanel(
               selectInput("map_gender", "Select gender:", choices = c("All", unique(clean_data$Gender))),
@@ -101,7 +111,7 @@ ui <- fluidPage(
           mainPanel(
           leafletOutput("map"))
       ),
-    #Plotly tabpanel
+    #The code below presents the data through Plotly
     tabPanel("Plotly Graph",
              sidebarPanel(
               selectInput("plotly_variable", "Select variable:", choices = unique(names(clean_data)[2:ncol(clean_data)]))
@@ -180,26 +190,6 @@ server <- function(input, output) {
     }
   })
   
-  
-  output$map <- renderLeaflet({
-      # code from https://rstudio.github.io/leaflet/choropleths.html
-      m <- leaflet(usa_map) |> 
-        setView(-96, 37.8, 4) |> 
-        addProviderTiles("MapBox", options = providerTileOptions(
-          id = "mapbox.light",
-          accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) 
-        
-      bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
-      pal <- colorBin("YlOrRd", domain = input$map_variable, bins = bins)
-      m %>% addPolygons(
-        fillColor = ~pal(input$map_variable),
-        weight = 2,
-        opacity = 1,
-        color = "white",
-        dashArray = "3",
-        fillOpacity = 0.7)
-    })
-  
   output$plotly <- renderPlotly({
       #Create plotly, using dataset from prev. chunk
       fig <- clean_data_filtered() %>%
@@ -218,10 +208,48 @@ server <- function(input, output) {
             )
         )
   })
+  
+  
+  # Create the Leaflet map
+    
+    # Filter data to include only states, we are only interested in thee United States
+    clean_data <- clean_data[complete.cases(clean_data$state_full), ]
+    
+    #Using maps package, discovered through ChatGPT to add longitude and latitude for each state
+      
+    
+
+    
+    
+    
+
+
+    output$map <- renderLeaflet({
+      # code from https://rstudio.github.io/leaflet/choropleths.html
+      m <- leaflet(usa_map) |> 
+        setView(-96, 37.8, 4) |> 
+        addProviderTiles("MapBox", options = providerTileOptions(
+          id = "mapbox.light",
+          accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) 
+        
+      bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+      pal <- colorBin("YlOrRd", domain = input$map_variable, bins = bins)
+      m %>% addPolygons(
+        fillColor = ~pal(input$map_variable),
+        weight = 2,
+        opacity = 1,
+        color = "white",
+        dashArray = "3",
+        fillOpacity = 0.7)
+    })
+    
+  })
+  
 }
 
 
-# Refrenced Chat GPT
+
+# Referenced Chat GPT
 
 ```
 
@@ -230,3 +258,6 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 
 ```
+
+
+  
