@@ -1,19 +1,15 @@
 ---
 title: "Shiny_App"
-author: "Nir Ben Laufer"
+author: "Ben Laufer, Josh Rowe, Roee Morag"
 date: "2023-04-19"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-
 knitr::opts_chunk$set(echo = TRUE)
-
 ```
 
-
 ```{r libraries}
-
 library(shiny)
 library(dplyr)
 library(ggplot2)
@@ -21,16 +17,79 @@ library(leaflet)
 library(geojsonio)
 library(plotly)
 library(maps)
+library(readr)
+```
+
+```{r Read in Data}
+#Dataset from https://www.kaggle.com/datasets/osmi/mental-health-in-tech-survey?resource=download
+
+survey <- read_csv(here::here("survey.csv"))
+```
+
+```{r view data}
+#Filter all data that is not in the "default" range/bound
+Gender <- survey |> 
+  select(Gender) |> 
+  filter(Gender != "Male" & Gender != "Female") |> 
+  filter(!duplicated(Gender))
+
+Age <- survey |> 
+  select(Age) |> 
+  filter(Age < 5 | Age > 122)
+```
+
+```{r clean}
+# Comments from class 4/25
+# use case_when instead of nested ifs
+# OR make a spreadsheet with all responses and left join
+# It's okay to randomly drop rows (e.g. because the datapoints look fishy, like the person who said they were 8 yrs old or the person who answered the first response on every dropdown)
+# It's dangerous/bad practice to systematically drop datapoints because that gives you biased data
+
+clean_data <- survey %>%
+  mutate(
+    Gender = case_when(Gender == "Male" | Gender == "M" | Gender == "male" | 
+                              Gender == "m" | Gender == "maile" | Gender == "Cis Male" | 
+                              Gender == "Mal" | Gender == "Male (CIS)" | 
+                              Gender == "Make" | Gender == "Man" | Gender == "msle" | 
+                              Gender == "Mail" | Gender == "cis male" | 
+                              Gender == "Malr" | Gender == "Cis Man"
+                            ~ "Male",
+            Gender == "Female" | Gender == "female" | Gender == "F" | 
+                             Gender == "Woman" | Gender == "f" | Gender == "Femake" | 
+                             Gender == "woman" | Gender == "cis-female/femme" | 
+                             Gender == "Female (cis)" | Gender == "femail" 
+              ~ "Female",
+            Gender == "Male-ish" | Gender == "something kinda male?" | 
+                               Gender == "male leaning androgynous" | 
+                               Gender == "Guy (-ish) ^_^" | 
+                               Gender == "ostensibly male, unsure what that really means"
+              ~ "Leaning Male",
+            Gender == "queer/she/they" 
+              ~ "Leaning Female",
+            Gender == "Trans-female" | Gender == "Trans woman" | 
+                                   Gender == "Female (trans)" 
+              ~ "Trans Female", 
+            Gender == "non-binary" | Gender == "All" | 
+                                     Gender == "Enby" | Gender == "fluid" | 
+                                     Gender == "Genderqueer" | Gender == "Androgyne" | 
+                                     Gender == "Agender" | Gender == "queer"
+              ~ "Nonbinary",
+            TRUE ~ "Did Not Specify")) |> 
+  mutate(Age = ifelse(Age < 18 | Age > 100,
+                      NA,
+                      Age),
+         across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x))) |> 
+  select(Age:obs_consequence)
+
+
+saveRDS(clean_data, file = "clean_data.RDS")
 ```
 
 
 
 ```{r clean_data read in}
-
 #Takes the cleaned clean_data from the previous R markdown
 clean_data <- readRDS(here::here("clean_data.RDS"))
-
-head(clean_data)
 
 survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "state", 
                                        "self_employed", "family_history", 
@@ -70,7 +129,6 @@ survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "st
 ```
 
 ```{r Cleaning for Map}
-
 state_lookup <- setNames(state.name, state.abb)
 
 # Filter data to include only states, we are only interested in thee United States
