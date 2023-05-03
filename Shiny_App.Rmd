@@ -85,8 +85,6 @@ clean_data <- survey %>%
 saveRDS(clean_data, file = "clean_data.RDS")
 ```
 
-
-
 ```{r clean_data read in}
 #Takes the cleaned clean_data from the previous R markdown
 clean_data <- readRDS(here::here("clean_data.RDS"))
@@ -130,19 +128,16 @@ survey_questions <- data.frame(Variable_Name = c("Age", "Gender", "Country", "st
 
 ```{r Cleaning for Map}
 state_lookup <- setNames(state.name, state.abb)
-
 # Filter data to include only states, we are only interested in thee United States
-    clean_data_states <- clean_data_states[complete.cases(clean_data_states$state_full), ]
-    
-    #Using maps package, 
-      
-    state.center <- as.data.frame(state.center)
-    state.center$state_full <- state.name
-    
-    clean_data_merged <- merge(state.center, clean_data_states, by = "state_full")
-
 clean_data_states <- clean_data
 clean_data_states$state_full <- state_lookup[as.character(clean_data$state)]
+clean_data_states <- clean_data_states[complete.cases(clean_data_states$state_full), ]
+  
+#Using maps package, 
+state.center <- as.data.frame(state.center)
+state.center$state_full <- state.name
+    
+clean_data_merged <- merge(state.center, clean_data_states, by = "state_full")
 
 ```
 
@@ -190,10 +185,10 @@ ui <- fluidPage(
           )
 )
 )
+#Refrenced Chat GPT
 ```
 
 ```{R Server}
-
 # Define server
 server <- function(input, output) {
 
@@ -276,8 +271,6 @@ server <- function(input, output) {
         )
   })
   
-  
-  
     # Create the Leaflet map
     
     clean_data_map_filtered <- reactive({
@@ -315,17 +308,10 @@ server <- function(input, output) {
         addCircles(lng = clean_data_merged$x, lat = clean_data_merged$y, weight = 1, radius = 15000 * sqrt(clean_data_map_summary()$Percentage))
         
         
-        
     })
     
   }
-  
-
-
-
-
 # Referenced Chat GPT
-
 ```
 
 ```{r app}
@@ -333,6 +319,3 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 
 ```
-
-
-  
