@@ -44,10 +44,6 @@ clean_data <- survey %>%
          across(.cols = self_employed:obs_consequence, .fns = ~ as.factor(.x))) |> 
   select(Age:obs_consequence)
 
-#saveRDS(clean_data, file = "clean_data.RDS")
-
-# ---- Load Clean Data ----
-clean_data <- readRDS(here::here("clean_data.RDS"))
 
 survey_questions <- data.frame(
   Variable_Name = c("Age", "Gender", "Country", "state", "self_employed", "family_history", 
