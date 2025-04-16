@@ -20,12 +20,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.3.2'   # Must match runtime.txt
+          r-version: '4.3.2'   # Make sure this matches your runtime.txt
 
-      - name: Install dependencies
+      - name: Install rsconnect
         run: |
-          install.packages(c("shiny", "dplyr", "ggplot2", "leaflet", "geojsonio",
-                             "plotly", "maps", "readr", "here", "knitr", "rsconnect"))
+          install.packages("rsconnect")
 
       - name: Deploy to shinyapps.io
         run: |
