@@ -25,8 +25,7 @@ jobs:
       - name: Install rsconnect
         run: |
           mkdir -p "$R_LIBS_USER"
-          echo '.libPaths(Sys.getenv("R_LIBS_USER"))' >> .Rprofile
-          Rscript -e 'install.packages("rsconnect", repos = "https://cloud.r-project.org")'
+          Rscript -e 'install.packages("rsconnect", lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
 
       - name: Deploy app
         env:
@@ -35,6 +34,12 @@ jobs:
           SHINYAPPS_TOKEN: ${{ secrets.TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SECRET }}
         run: |
-          Rscript -e '.libPaths(Sys.getenv("R_LIBS_USER"))'
-          Rscript -e 'rsconnect::setAccountInfo(name=Sys.getenv("SHINYAPPS_ACCOUNT"), token=Sys.getenv("SHINYAPPS_TOKEN"), secret=Sys.getenv("SHINYAPPS_SECRET"))'
-          Rscript -e 'rsconnect::deployApp(appName=Sys.getenv("SHINYAPPS_NAME"))'
+          Rscript -e '
+            .libPaths(Sys.getenv("R_LIBS_USER"));
+            library(rsconnect);
+            rsconnect::setAccountInfo(
+              name = Sys.getenv("SHINYAPPS_ACCOUNT"),
+              token = Sys.getenv("SHINYAPPS_TOKEN"),
+              secret = Sys.getenv("SHINYAPPS_SECRET")
+            );
+            rsconnect::deployApp(appName = Sys.getenv("SHINYAPPS_NAME"))'
