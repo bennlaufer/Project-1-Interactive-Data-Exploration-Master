@@ -9,6 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      R_LIBS_USER: ${{ github.workspace }}/Rlibs
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -19,17 +22,22 @@ jobs:
       - name: Setup pandoc
         uses: r-lib/actions/setup-pandoc@v2
 
-      - name: Install dependencies
+      - name: Install rsconnect
         run: |
-          Rscript -e 'install.packages("remotes")'
-          Rscript -e 'install.packages(c("rsconnect"))'
+          dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)
+          install.packages("rsconnect", lib = Sys.getenv("R_LIBS_USER"))
+        shell: Rscript {0}
 
       - name: Deploy app
         env:
-          SHINYAPPS_NAME: 'myApp'
-          SHINYAPPS_ACCOUNT: 'blauf'
+          SHINYAPPS_NAME: myApp
+          SHINYAPPS_ACCOUNT: blauf
           SHINYAPPS_TOKEN: ${{ secrets.TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SECRET }}
         run: |
-          Rscript -e 'rsconnect::setAccountInfo(name=Sys.getenv("SHINYAPPS_ACCOUNT"), token=Sys.getenv("SHINYAPPS_TOKEN"), secret=Sys.getenv("SHINYAPPS_SECRET"))'
-          Rscript -e 'rsconnect::deployApp(appName=Sys.getenv("SHINYAPPS_NAME"))'
+          .libPaths(Sys.getenv("R_LIBS_USER"))
+          rsconnect::setAccountInfo(name=Sys.getenv("SHINYAPPS_ACCOUNT"),
+                                    token=Sys.getenv("SHINYAPPS_TOKEN"),
+                                    secret=Sys.getenv("SHINYAPPS_SECRET"))
+          rsconnect::deployApp(appName=Sys.getenv("SHINYAPPS_NAME"))
+        shell: Rscript {0}
