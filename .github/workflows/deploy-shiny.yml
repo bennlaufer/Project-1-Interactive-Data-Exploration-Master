@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      R_LIBS_USER: ${{ github.workspace }}/Rlibs
+      R_LIBS_USER: ${{ github.workspace }}/.Rlibrary
 
     steps:
       - name: Checkout code
@@ -22,7 +22,7 @@ jobs:
       - name: Setup pandoc
         uses: r-lib/actions/setup-pandoc@v2
 
-      - name: Install rsconnect
+      - name: Create library and install rsconnect
         run: |
           mkdir -p "$R_LIBS_USER"
           Rscript -e 'install.packages("rsconnect", lib = Sys.getenv("R_LIBS_USER"), repos = "https://cloud.r-project.org")'
@@ -34,12 +34,8 @@ jobs:
           SHINYAPPS_TOKEN: ${{ secrets.TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SECRET }}
         run: |
-          Rscript -e '
-            .libPaths(Sys.getenv("R_LIBS_USER"));
-            library(rsconnect);
-            rsconnect::setAccountInfo(
-              name = Sys.getenv("SHINYAPPS_ACCOUNT"),
-              token = Sys.getenv("SHINYAPPS_TOKEN"),
-              secret = Sys.getenv("SHINYAPPS_SECRET")
-            );
-            rsconnect::deployApp(appName = Sys.getenv("SHINYAPPS_NAME"))'
+          echo '.libPaths("${R_LIBS_USER}")' > deploy.R
+          echo 'library(rsconnect)' >> deploy.R
+          echo 'rsconnect::setAccountInfo(name = Sys.getenv("SHINYAPPS_ACCOUNT"), token = Sys.getenv("SHINYAPPS_TOKEN"), secret = Sys.getenv("SHINYAPPS_SECRET"))' >> deploy.R
+          echo 'rsconnect::deployApp(appName = Sys.getenv("SHINYAPPS_NAME"))' >> deploy.R
+          Rscript deploy.R
